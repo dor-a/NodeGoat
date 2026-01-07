@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  security:
+  trivy:
+    name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -12,16 +13,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      # Gitleaks - Secret scanning
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Trivy - Vulnerability scanning (console)
       - name: Run Trivy (console output)
         uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -30,7 +22,6 @@ jobs:
           severity: 'HIGH,CRITICAL'
           exit-code: '0'
 
-      # Trivy - Vulnerability scanning (sarif)
       - name: Run Trivy (sarif)
         uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -46,3 +37,20 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy'
+
+  gitleaks:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
