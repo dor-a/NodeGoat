@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - name: Run Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -15,3 +16,10 @@ jobs:
           format: 'table'
           severity: 'HIGH,CRITICAL'
           exit-code: '0'
+          output: 'trivy-report.txt'
+      
+      - name: Upload Trivy Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
