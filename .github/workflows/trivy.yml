@@ -7,9 +7,17 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
-      - name: Run Trivy
+      - name: Run Trivy (console output)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+      
+      - name: Run Trivy (sarif)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
