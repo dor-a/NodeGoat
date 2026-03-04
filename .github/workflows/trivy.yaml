@@ -1,36 +1,40 @@
-name: Trivy HTML Scan
+name: Trivy Security Scan (SARIF)
 on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
+    # NEW: We must give GitHub Actions permission to write to the Security Tab
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout entire repository history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run Trivy Scan (Generate HTML)
+      - name: Run Trivy Scan (SARIF Format)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: "fs"
           scan-ref: "."
-          # Use Trivy's built-in HTML template
-          format: "template"
-          template: "@/contrib/html.tpl"
-          output: "trivy-report.html"
-          scanners: "vuln,secret,config"
+          # NEW: Use SARIF format
+          format: "sarif"
+          output: "trivy-results.sarif"
+          scanners: "vuln,secret,misconfig"
           severity: "CRITICAL,HIGH"
-          # '1' tells the pipeline to fail/exit if vulnerabilities are found
+          # This still fails the pipeline step if vulnerabilities are found
           exit-code: "1"
 
-      - name: Upload HTML Report as Artifact
-        uses: actions/upload-artifact@v4
-        if: always() # This ensures the report is saved EVEN IF the scan fails above
+      # NEW: Upload the SARIF file to GitHub's Security tab
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() # Ensure the upload happens even if the previous step failed (exit-code 1)
         with:
-          name: trivy-security-report
-          path: trivy-report.html
-          retention-days: 7 # Keeps your GitHub storage clean
+          sarif_file: "trivy-results.sarif"
