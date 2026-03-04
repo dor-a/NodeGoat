@@ -1,0 +1,36 @@
+name: Trivy HTML Scan
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout entire repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy Scan (Generate HTML)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          # Use Trivy's built-in HTML template
+          format: "template"
+          template: "@/contrib/html.tpl"
+          output: "trivy-report.html"
+          scanners: "vuln,secret,config"
+          severity: "CRITICAL,HIGH"
+          # '1' tells the pipeline to fail/exit if vulnerabilities are found
+          exit-code: "1"
+
+      - name: Upload HTML Report as Artifact
+        uses: actions/upload-artifact@v4
+        if: always() # This ensures the report is saved EVEN IF the scan fails above
+        with:
+          name: trivy-security-report
+          path: trivy-report.html
+          retention-days: 7 # Keeps your GitHub storage clean
